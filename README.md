@@ -12,7 +12,10 @@ You kick off five Codex sessions in tmux, step away for coffee, and come back to
 ## Quick Start
 
 ```bash
-git clone https://github.com/bkochavy/openclaw-agent-dashboard.git && node openclaw-agent-dashboard/server.js
+curl -fsSL https://openclaw.ai/install.sh | bash
+git clone https://github.com/bkochavy/openclaw-agent-dashboard.git
+cd openclaw-agent-dashboard
+node server.js
 ```
 
 Open **http://localhost:7891** -- that's it. No build step, no framework, no npm install.
@@ -74,13 +77,18 @@ You are an AI coding agent. Here is everything you need to launch and use the da
 **Start the dashboard:**
 
 ```bash
-cd ~/.openclaw/workspace/skills/openclaw-agent-dashboard && node server.js &
+cd ~/.openclaw/workspace/skills/openclaw-agent-dashboard
+nohup node server.js >/tmp/openclaw-agent-dashboard.log 2>&1 &
+echo $! >/tmp/openclaw-agent-dashboard.pid
+until curl -fsS http://127.0.0.1:7891/api/sessions >/dev/null; do sleep 0.2; done
 ```
 
 **Stop the dashboard:**
 
 ```bash
-pkill -f "openclaw-agent-dashboard/server.js"
+if [ -f /tmp/openclaw-agent-dashboard.pid ]; then
+  kill "$(cat /tmp/openclaw-agent-dashboard.pid)" && rm -f /tmp/openclaw-agent-dashboard.pid
+fi
 ```
 
 **API:**
@@ -117,11 +125,8 @@ git clone https://github.com/bkochavy/openclaw-agent-dashboard.git \
   ~/.openclaw/workspace/skills/openclaw-agent-dashboard
 ```
 
-Or run directly with npx:
-
-```bash
-npx openclaw-agent-dashboard
-```
+OpenClaw config path: `~/.openclaw/openclaw.json`  
+OpenClaw gateway default: `http://127.0.0.1:18789`
 
 ## License
 

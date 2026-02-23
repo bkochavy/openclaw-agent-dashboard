@@ -12,7 +12,9 @@ Launch a local web dashboard to monitor all running tmux/Ralph coding sessions.
 
 ```bash
 cd {baseDir}
-node server.js
+nohup node server.js >/tmp/openclaw-agent-dashboard.log 2>&1 &
+echo $! >/tmp/openclaw-agent-dashboard.pid
+until curl -fsS http://127.0.0.1:7891/api/sessions >/dev/null; do sleep 0.2; done
 ```
 
 Dashboard available at: http://localhost:7891
@@ -20,7 +22,9 @@ Dashboard available at: http://localhost:7891
 ## How to stop
 
 ```bash
-pkill -f "agent-dashboard/server.js"
+if [ -f /tmp/openclaw-agent-dashboard.pid ]; then
+  kill "$(cat /tmp/openclaw-agent-dashboard.pid)" && rm -f /tmp/openclaw-agent-dashboard.pid
+fi
 ```
 
 ## What it shows
@@ -35,8 +39,11 @@ pkill -f "agent-dashboard/server.js"
 | Env var | Default | Description |
 |---------|---------|-------------|
 | `PORT` | `7891` | HTTP port |
+| `HOST` | `0.0.0.0` | Bind address |
 | `TMUX_SOCK` | `~/.tmux/sock` | tmux socket path |
 
 ## API
 
 `GET /api/sessions` — returns JSON array of all sessions
+`GET /api/sessions/:name/capture` — returns full capture lines for one session
+`GET /api/git` — returns branch/commit/uncommitted info for the dashboard repo
