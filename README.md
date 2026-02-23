@@ -1,61 +1,114 @@
 # openclaw-agent-dashboard
+
 ![openclaw-agent-dashboard](https://raw.githubusercontent.com/bkochavy/openclaw-agent-dashboard/main/.github/social-preview.png)
-
-
-> Monitor your Codex and Claude Code tmux sessions in real time.
-
-[screenshot placeholder]
-
-A local web dashboard for watching tmux sessions running Codex or Claude Code.
-See which sessions are running, which stalled, and which finished — at a glance.
-No build step. No framework. Just Node.js + a single HTML file.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-compatible-orange)](https://openclaw.ai)
 
+You kick off five Codex sessions in tmux, step away for coffee, and come back to... which ones finished? Which ones have been stuck for 20 minutes? Which ones errored out silently?
+
+**openclaw-agent-dashboard** is a zero-dependency local web dashboard that monitors your tmux sessions running [Codex](https://github.com/openai/codex) or [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Built for the [OpenClaw](https://openclaw.ai) ecosystem.
+
+## Quick Start
+
+```bash
+git clone https://github.com/bkochavy/openclaw-agent-dashboard.git && node openclaw-agent-dashboard/server.js
+```
+
+Open **http://localhost:7891** -- that's it. No build step, no framework, no npm install.
+
+## What You See
+
+Each tmux session gets a card showing:
+
+| Element | What it tells you |
+|---|---|
+| **Status indicator** | Is this session running, stalled, done, or broken? |
+| **Task progress** | `4/8 tasks` parsed from agent output or your PRD checklist |
+| **Git info** | Branch, last commit hash + message, uncommitted change count |
+| **Terminal preview** | Last 15 meaningful lines of output, right on the card |
+| **Timing** | How long the session has been running |
+| **Full capture** | Click "View capture" to see the complete pane output |
+
+### Status Indicators
+
+| Status | Meaning |
+|---|---|
+| **Running** | Output is actively changing between polls (every 10s) |
+| **Stalled** | Output hasn't changed for 3 consecutive polls (~30s) |
+| **Completed** | Agent printed a completion message or exited with code 0 |
+| **Error** | Agent hit an error, exception, or exited with a non-zero code |
+
+### Reading the Dashboard
+
+The top bar shows your git branch and a session count badge. Use the **search box** to filter sessions by name, or toggle the **status filter chips** (Running / Stalled / Completed / Error) to focus on what matters. Filter preferences persist across refreshes.
+
+Cards are sorted by urgency: running sessions first, then stalled, errors, and completed last. The terminal preview on each card gives you enough context to decide whether to intervene -- click through for the full output.
+
 ## 👤 For Humans
 
-**The problem:** You launch 3 Codex sessions in tmux, walk away, and have no idea
-which are still running, which stalled 20 minutes ago, and which finished while you
-weren't looking.
+**Requirements:**
+- Node.js 18+
+- tmux with sessions at `~/.tmux/sock` (or set `TMUX_SOCK`)
 
-**What this shows:**
-- Every tmux session running Codex or Claude Code
-- Status: 🟢 running / 🟡 stalled / ✅ completed / ❌ error
-- Task progress: "Task 4 of 8" from Ralph output
-- PRD checklist progress: `12 / 47 tasks` from your PRD.md
-- Git info: branch, last commit, uncommitted changes
-- Full pane output on click
+**Run it:**
 
-**Start:**
 ```bash
-npx openclaw-agent-dashboard
-# or
 node server.js
 ```
 
-Open http://localhost:7891
+**Configuration:**
 
-**Requirements:**
-- tmux running with socket at `~/.tmux/sock`
-- Node.js 18+
+| Env var | Default | Description |
+|---|---|---|
+| `PORT` | `7891` | HTTP port |
+| `HOST` | `0.0.0.0` | Bind address |
+| `TMUX_SOCK` | `~/.tmux/sock` | tmux socket path |
+
+The dashboard works even with zero active sessions -- it'll show an empty state and pick up sessions as they start.
 
 ## 🤖 For Agents
 
-To start the dashboard:
+You are an AI coding agent. Here is everything you need to launch and use the dashboard.
+
+**Start the dashboard:**
+
 ```bash
-cd ~/.openclaw/workspace/skills/openclaw-agent-dashboard
-node server.js &
+cd ~/.openclaw/workspace/skills/openclaw-agent-dashboard && node server.js &
 ```
 
-API endpoints:
-- `GET /api/sessions` — all sessions with status, progress, git info
-- `GET /api/sessions/:name` — single session detail
+**Stop the dashboard:**
 
-Status values: `running` | `stalled` | `completed` | `error`
+```bash
+pkill -f "openclaw-agent-dashboard/server.js"
+```
 
-The dashboard reads `~/.tmux/sock`. If sessions use a different socket,
-set `TMUX_SOCK` env var.
+**API:**
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/sessions` | JSON array -- all sessions with status, progress, git info, last output lines |
+| `GET /api/sessions/:name/capture` | JSON `{ name, lines }` -- full pane capture for one session |
+| `GET /api/git` | JSON -- git branch, last commit, uncommitted changes for the dashboard repo |
+
+**Status values:** `running` | `stalled` | `completed` | `error`
+
+**Session object shape:**
+
+```json
+{
+  "name": "session-name",
+  "status": "running",
+  "stallCount": 0,
+  "taskProgress": { "current": 4, "total": 8 },
+  "git": { "branch": "main", "lastCommit": { "hash": "abc1234", "subject": "..." }, "uncommittedChanges": 2 },
+  "lastLines": ["..."],
+  "ralphInfo": { "iteration": 3, "exitCode": null },
+  "checklistProgress": { "done": 12, "total": 47 }
+}
+```
+
+The dashboard reads tmux socket at `~/.tmux/sock`. Override with `TMUX_SOCK` env var. Polls every 10 seconds. A session is marked "stalled" after 3 polls (~30s) with no output change.
 
 ## Install
 
@@ -64,12 +117,12 @@ git clone https://github.com/bkochavy/openclaw-agent-dashboard.git \
   ~/.openclaw/workspace/skills/openclaw-agent-dashboard
 ```
 
-Or tell your agent: "start the agent dashboard" and it will find and launch it.
+Or run directly with npx:
 
-## Requirements
+```bash
+npx openclaw-agent-dashboard
+```
 
-| Tool | Required | Notes |
-|------|----------|-------|
-| `node` 18+ | yes | |
-| `tmux` | yes | sessions must use `~/.tmux/sock` |
-| Ralph/Codex running | no | dashboard works without sessions too |
+## License
+
+[MIT](LICENSE)
