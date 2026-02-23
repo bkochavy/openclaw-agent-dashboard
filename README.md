@@ -1,4 +1,6 @@
 # openclaw-agent-dashboard
+![openclaw-agent-dashboard](https://raw.githubusercontent.com/bkochavy/openclaw-agent-dashboard/main/.github/social-preview.png)
+
 
 > Monitor your Codex and Claude Code tmux sessions in real time.
 
