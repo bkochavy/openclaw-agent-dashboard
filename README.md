@@ -1,23 +1,24 @@
 # openclaw-agent-dashboard
 
-> See all your running AI coding agents in one place.
+> Monitor your Codex and Claude Code tmux sessions in real time.
 
 [screenshot placeholder]
 
-A local web dashboard for monitoring OpenClaw/Ralph coding agent sessions in tmux.
+A local web dashboard for watching tmux sessions running Codex or Claude Code.
+See which sessions are running, which stalled, and which finished — at a glance.
 No build step. No framework. Just Node.js + a single HTML file.
 
-[![License: MIT][badge]]
-[![OpenClaw][badge]]
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![OpenClaw](https://img.shields.io/badge/OpenClaw-compatible-orange)](https://openclaw.ai)
 
 ## 👤 For Humans
 
-**The problem:** You launch 3 Codex sessions in tmux and have no idea
-which ones are running, which stalled, and which finished 20 minutes ago
-without telling you.
+**The problem:** You launch 3 Codex sessions in tmux, walk away, and have no idea
+which are still running, which stalled 20 minutes ago, and which finished while you
+weren't looking.
 
 **What this shows:**
-- Every tmux session with a Ralph/Codex agent running
+- Every tmux session running Codex or Claude Code
 - Status: 🟢 running / 🟡 stalled / ✅ completed / ❌ error
 - Task progress: "Task 4 of 8" from Ralph output
 - PRD checklist progress: `12 / 47 tasks` from your PRD.md
